@@ -61,7 +61,7 @@ function databaseMarker() {
                 const placeRating = place.rating === undefined ? 0 : place.rating;
                 const placeName = place.name === undefined ? "이름 없음" : place.name;
                 const placePhoneNumber = place.formatted_phone_number === undefined ? "전화번호 없음" : place.formatted_phone_number;
-                const address = place.formatted_address === undefined ? "주소정보 없음" : place.formatted_address
+                const address = place.address === undefined ? "주소정보 없음" : place.address;
                 let openingHoursHTML = "로딩 중..."; // 초기 값 설정
                 let reviewsHTML = "로딩 중..."; // 초기 값 설정
 
@@ -107,19 +107,19 @@ function databaseMarker() {
                             }
                             const listItem = document.createElement("li");
                             listItem.innerHTML = `
-                    <label for='name'>이름</label><input name='name' id='name' value='${placeName}' readonly />
-                    <label for='address'>주소</label><input name='address' id='address' value='${address}' readonly /></br>
-                    <label for='phone'>전화번호</label><input name='phoneNumber' id='phone' value='${placePhoneNumber}' readonly />
-                    <label for='rating'>별점</label><input name='rating' id='rating' value='${placeRating}' readonly />
-                    <label for='placeId'></label><input type='hidden' name='placeId' id='placeId' value='${placeId}' readonly />
-                    <label for='lat'></label><input type='hidden' name='latitude' id='lat' value='${lat}' readonly />
-                    <label for='longitude'></label><input type='hidden' name='longitude' id='longitude' value='${lng}' readonly />
-                    <label for='openingHours'>영업시간</label></br>
-                    <div class='valueText'>${openingHoursHTML}</div>
-                    <label for='reviews'>리뷰</label></br>
-                    <div class='valueText'>${reviewsHTML}</div>
-                    <input type='button' value='삭제' onclick='deletePlace(this)' />
-                    `;
+                            <label for='name'>이름</label><input name='name' id='name' value='${placeName}' readonly />
+                            <label for='address'>주소</label><input name='address' id='address' value='${address}' readonly /></br>
+                            <label for='phone'>전화번호</label><input name='phoneNumber' id='phone' value='${placePhoneNumber}' readonly />
+                            <label for='rating'>별점</label><input name='rating' id='rating' value='${placeRating}' readonly />
+                            <label for='placeId'></label><input type='hidden' name='placeId' id='placeId' value='${placeId}' readonly />
+                            <label for='lat'></label><input type='hidden' name='latitude' id='lat' value='${lat}' readonly />
+                            <label for='longitude'></label><input type='hidden' name='longitude' id='longitude' value='${lng}' readonly />
+                            <label for='openingHours'>영업시간</label></br>
+                            <div class='valueText'>${openingHoursHTML}</div>
+                            <label for='reviews'>리뷰</label></br>
+                            <div class='valueText'>${reviewsHTML}</div>
+                            <input type='button' value='삭제' onclick='deletePlace(this)' />
+                            `;
 
                             list.appendChild(listItem);
 
@@ -201,6 +201,7 @@ function addMarker(position) {
                 const reviews = place.reviews
                 let reviewsHTML = "";
                 if (Array.isArray(reviews)) {
+                    let count = 0;
                     reviews.forEach(review => {
                         if(count <2) {
                             const reviewText = review.text;
@@ -232,7 +233,7 @@ function addMarker(position) {
                 const content =
                     "<form id='infowindow'>" + `
                         <div id = 'infowindowWrap'>
-                            <label for='name'>이름</label><input name='name' id='name' value='${placeName}' readonly /></br>
+                            <label for='name'>이름</label><input name='name' id='name' value='${/^\d+$|^\d+-\d+$/.test(placeName) ? address : placeName}' readonly /></br>
                             <label for='address'>주소</label><input name='address' id='address' value='${address}' type='hidden' readonly /></br>
                             <div class='valueText'>${address}</div>
                             <label for='phone'>전화번호</label><input name='phoneNumber' id='phone' value='${placePhoneNumber}' readonly /></br>
@@ -396,6 +397,7 @@ function addPlace() {
     const reviews = place.reviews
     let reviewsHTML = "";
     if (Array.isArray(reviews)) {
+        let count = 0;
         reviews.forEach(review => {
             if(count <2) {
                 const reviewText = review.text;
@@ -424,7 +426,7 @@ function addPlace() {
 
     // 장소 정보 리스트 내용
     listItem.innerHTML = `
-        <label for='name'>이름</label><input name='name' id='name' value='${placeName}' readonly />
+        <label for='name'>이름</label><input name='name' id='name' value='${/^\d+$|^\d+-\d+$/.test(placeName) ? address : placeName}' readonly /></br>
         <label for='address'>주소</label><input name='address' id='address' value='${address}' readonly /></br>
         <label for='phone'>전화번호</label><input name='phoneNumber' id='phone' value='${placePhoneNumber}' readonly />
         <label for='rating'>별점</label><input name='rating' id='rating' value='${placeRating}' readonly />
@@ -446,7 +448,7 @@ function addPlace() {
     const parentId = document.getElementById("parentId").value;
     // placeItems list에 넣기
     placeItems.push({
-        "name": placeName,
+        "name": /^\d+$|^\d+-\d+$/.test(placeName) ? address : placeName,
         "phoneNumber": placePhoneNumber,
         "rating": placeRating,
         "placeId": placeId,

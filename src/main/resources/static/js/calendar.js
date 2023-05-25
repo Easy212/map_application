@@ -68,9 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     a.setAttribute('href', `https://localhost:8080/schedule/${event.id}`); // href 추가
                     a.setAttribute('class', 'daysPlan'); // a태그의 클래스 추가
                     container.appendChild(a); // a 태그 추가
-            } 
-
-
+            }
 
             $('input[id=modify_content]').val(title); // id가 modify_content인 input에 title값 넣기
             $('input[id=modify_start_date]').val(startDay); // id가 modify_start_date인 input에 startDay값 넣기
@@ -96,8 +94,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     info.event.setStart(modifiedStartDate);
                     info.event.setEnd(modifiedEndDate);
 
-                    console.log(info.event); // 변경된 이벤트 정보 확인
-
                     // 모달 창 닫기
                     $("#readModal").modal("hide");
 
@@ -105,9 +101,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             });
         }
-
-
-
     });
     calendar.render();
 
