@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Map Application</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
-    <link rel="stylesheet" type="text/css" href="http://localhost:8080/css/index.css" />
+    <link rel="stylesheet" type="text/css" href="/css/map.css" />
     <script src="http://code.jquery.com/jquery-latest.min.js"></script>
-    <script src="http://localhost:8080/js/index.js"></script>
-    <script src="http://localhost:8080/js/sidebar.js"></script>
+    <script src="/js/map.js"></script>
+    <script src="/js/sidebar.js"></script>
   </head>
   <body>
     <!-- calender -->
@@ -24,7 +24,7 @@
         <div class="content_list">
           <ul id="place_list">
             <div th:each="schedule : ${dailySchedules}">
-                <a th:href="@{'http://localhost:8080/places/' + ${schedule.id}}">
+                <a th:href="@{'/places/' + ${schedule.id}}">
                   <div class="title" th:text="${schedule.title}"></div>
                   <div class="date" th:text="${schedule.date}"></div>
                 </a>
@@ -54,9 +54,7 @@
       <div id="map"></div>
     </div>
 
-    <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&callback=initMap&libraries=places&v=weekly"
-      defer
-    ></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCINHemUaU3XNZAq3m9AjgAFbV-HRaKTXg&libraries=places&v=weekly&callback=initMap"
+            defer></script>
   </body>
 </html>

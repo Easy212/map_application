@@ -61,7 +61,7 @@ function databaseMarker() {
                 const placeRating = place.rating === undefined ? 0 : place.rating;
                 const placeName = place.name === undefined ? "이름 없음" : place.name;
                 const placePhoneNumber = place.formatted_phone_number === undefined ? "전화번호 없음" : place.formatted_phone_number;
-                const address = place.address === undefined ? "주소정보 없음" : place.address;
+                const address = place.address === undefined ? "주소정보 없음" : place.address
                 let openingHoursHTML = "로딩 중..."; // 초기 값 설정
                 let reviewsHTML = "로딩 중..."; // 초기 값 설정
 
@@ -107,19 +107,19 @@ function databaseMarker() {
                             }
                             const listItem = document.createElement("li");
                             listItem.innerHTML = `
-                            <label for='name'>이름</label><input name='name' id='name' value='${placeName}' readonly />
-                            <label for='address'>주소</label><input name='address' id='address' value='${address}' readonly /></br>
-                            <label for='phone'>전화번호</label><input name='phoneNumber' id='phone' value='${placePhoneNumber}' readonly />
-                            <label for='rating'>별점</label><input name='rating' id='rating' value='${placeRating}' readonly />
-                            <label for='placeId'></label><input type='hidden' name='placeId' id='placeId' value='${placeId}' readonly />
-                            <label for='lat'></label><input type='hidden' name='latitude' id='lat' value='${lat}' readonly />
-                            <label for='longitude'></label><input type='hidden' name='longitude' id='longitude' value='${lng}' readonly />
-                            <label for='openingHours'>영업시간</label></br>
-                            <div class='valueText'>${openingHoursHTML}</div>
-                            <label for='reviews'>리뷰</label></br>
-                            <div class='valueText'>${reviewsHTML}</div>
-                            <input type='button' value='삭제' onclick='deletePlace(this)' />
-                            `;
+                    <label for='name'>이름</label><input name='name' id='name' value='${placeName}' readonly />
+                    <label for='address'>주소</label><input name='address' id='address' value='${address}' readonly /></br>
+                    <label for='phone'>전화번호</label><input name='phoneNumber' id='phone' value='${placePhoneNumber}' readonly />
+                    <label for='rating'>별점</label><input name='rating' id='rating' value='${placeRating}' readonly />
+                    <label for='placeId'></label><input type='hidden' name='placeId' id='placeId' value='${placeId}' readonly />
+                    <label for='lat'></label><input type='hidden' name='latitude' id='lat' value='${lat}' readonly />
+                    <label for='longitude'></label><input type='hidden' name='longitude' id='longitude' value='${lng}' readonly />
+                    <label for='openingHours'>영업시간</label></br>
+                    <div class='valueText'>${openingHoursHTML}</div>
+                    <label for='reviews'>리뷰</label></br>
+                    <div class='valueText'>${reviewsHTML}</div>
+                    <input type='button' value='삭제' onclick='deletePlace(this)' />
+                    `;
 
                             list.appendChild(listItem);
 
@@ -148,7 +148,7 @@ function saveData() {
     const parentId = document.getElementById("parentId").value;
     console.log(placeItems)
     // AJAX 요청 보내기
-    fetch('/places/save/' + parentId, {
+    fetch('/places/' + parentId, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -178,8 +178,10 @@ function addMarker(position) {
     const geocoder = new google.maps.Geocoder();
     geocoder.geocode({location: position}, (results, status) => {
         if (status === "OK") {
+            console.log(results)
             // placeId 추출
             const placeId = results[0].place_id;
+
             marker.set("placeId", placeId);
 
             // 장소 정보 가져오기
@@ -554,3 +556,24 @@ function searchAutocomplete(map) {
 }
 
 window.initMap = initMap;
+
+document.addEventListener("DOMContentLoaded", function() {
+    // li 요소를 클릭했을 때의 이벤트 핸들러 함수
+    document.getElementById("place_list").addEventListener("click", function(event) {
+        // 클릭된 요소가 li인지 확인
+        if (event.target.tagName === "LI" || event.target.closest("li")) {
+            // 클릭된 li 요소 또는 li 요소의 자식 요소 내부의 id가 lat인 요소 찾기
+            var liElement = event.target.closest("li");
+            var latElement = liElement.querySelector("#lat");
+            var lngElement = liElement.querySelector("#longitude");
+            // 값이 있는지 확인하고 가져오기
+            var latValue = latElement ? latElement.value : null;
+            var lngValue = lngElement ? lngElement.value : null;
+            // 원하는 동작 수행
+            console.log('lat:', latValue);
+            console.log('lng:', lngValue);
+            const markerCenter = new google.maps.LatLng(latValue, lngValue); // daily일정의 첫 장소의 lat,lng를 markerCenter에 저장
+            map.setCenter(markerCenter) // 페이지 로딩시 map의 중앙을 첫 마커 중심으로 설정
+        }
+    });
+});

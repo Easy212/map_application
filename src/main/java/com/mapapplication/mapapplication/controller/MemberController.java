@@ -19,14 +19,13 @@ public class MemberController {
     // 회원가입
     @GetMapping("/join")
     public String joinForm() {
-        return "/member/join";
+        return "join";
     }
 
     @PostMapping("/join")
     public String join(@ModelAttribute MemberDto memberDTO) {
-        System.out.println("진입");
         memberService.join(memberDTO);
-        return "";
+        return "login";
     }
 
     // 회원정보 삭제
@@ -36,12 +35,6 @@ public class MemberController {
         return "redirect:/member/";
     }
 
-    // 로그인
-    @GetMapping("/login")
-    public String loginForm() {
-        return "/member/login";
-    }
-
     @PostMapping("/login")
     public String login(@ModelAttribute MemberDto memberDTO, HttpSession session) {
         MemberDto loginResult = memberService.login(memberDTO);
@@ -49,7 +42,8 @@ public class MemberController {
         if(loginResult != null) {
             // 로그인 성공
             session.setAttribute("loginEmail", loginResult.getMemberEmail());
-            return "main";
+            session.setAttribute("userId", loginResult.getId());
+            return "redirect:/schedules"; // GET 방식으로 리다이렉션 , 그냥 return하면 post방식으로감
         } else {
             // 로그인 실패
             return "/member/login";
