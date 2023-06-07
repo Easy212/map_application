@@ -8,6 +8,8 @@ import com.mapapplication.mapapplication.entity.TripSchedule;
 import com.mapapplication.mapapplication.repository.ScheduleRepository;
 import com.mapapplication.mapapplication.repository.TripDailyScheduleRepository;
 import com.mapapplication.mapapplication.service.ScheduleService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import java.util.List;
 
 
 @RestController
+@Api(tags = {"3. Schedules"})
 @RequestMapping("/schedules")
 public class ScheduleController {
 
@@ -37,27 +40,30 @@ public class ScheduleController {
     }
 
     @PostMapping("")
+    @ApiOperation(value = "전체 여행일정 생성", notes = "전체 여행일정을 생성합니다.")
     public RedirectView createTripSchedule(@RequestParam("title") String title,
                                            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
                                            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-                                           RedirectAttributes redirectAttributes, HttpSession session) {
+                                           HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
 
         // 요청 받은 데이터를 이용하여 TripSchedule 생성 로직 수행
         TripSchedule createdSchedule = scheduleService.createTripSchedule(title, startDate, endDate, userId);
 
-        // 생성된 TripSchedule 정보를 리다이렉트할 URL의 경로 변수로 설정
+        // 생성된 TripSchedule 정보의 parentId를 세션에 저장
         Long parentId = createdSchedule.getId();
-        redirectAttributes.addAttribute("parentId", parentId);
+        session.setAttribute("parentId", parentId);
 
         // 리다이렉트할 URL을 RedirectView로 생성하여 반환
         RedirectView redirectView = new RedirectView();
-        redirectView.setUrl("http://localhost:8080/schedules/");
+        redirectView.setUrl("/schedules/");
         return redirectView;
     }
 
 
+
     @GetMapping("")
+    @ApiOperation(value = "전체 여행일정 조회", notes = "전체 여행일정을 조회합니다.")
     public ModelAndView getCalendarPage(HttpSession session) {
         ModelAndView modelAndView;
         // loginEmail이 null이 아닐 때에만 특정 동작 수행
@@ -99,6 +105,7 @@ public class ScheduleController {
 */
 
     @PutMapping("/{tripId}")
+    @ApiOperation(value = "전체 여행일정 수정", notes = "전체 여행일정을 수정합니다.")
     public String updateTrip(
             @PathVariable("tripId") Long tripId,
             @RequestParam("title") String title,
@@ -120,6 +127,7 @@ public class ScheduleController {
 
 
     @GetMapping("/{parentId}/daily")
+    @ApiOperation(value = "일일 여행일정 조회", notes = "일일 여행일정을 조회합니다.")
     public ModelAndView getDailySchedulesByParentId(@PathVariable("parentId") Long parentId
             , HttpSession session) {
         ModelAndView modelAndView;
@@ -140,7 +148,9 @@ public class ScheduleController {
         return modelAndView;
     }
 
+
     @DeleteMapping("/{tripScheduleId}")
+    @ApiOperation(value = "전체 여행일정 삭제", notes = "전체 여행일정을 삭제합니다.")
     public ResponseEntity<String> deleteTripSchedule(@PathVariable Long tripScheduleId, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         boolean isMatching = isUserIdMatching(userId, tripScheduleId);
@@ -153,24 +163,9 @@ public class ScheduleController {
         }
     }
 
-//    @DeleteMapping("/{tripScheduleId}")
-//    public RedirectView deleteTripSchedule(@PathVariable Long tripScheduleId, RedirectAttributes redirectAttributes
-//            , HttpSession session) {
-//        Long userId = (Long) session.getAttribute("userId");
-//        boolean isMatching = isUserIdMatching(userId, tripScheduleId);
-//
-//        if (isMatching) {
-//            scheduleService.deleteTripSchedule(tripScheduleId);
-//            redirectAttributes.addFlashAttribute("message", "삭제 성공");
-//        } else {
-//            redirectAttributes.addFlashAttribute("error", "삭제 권한이 없습니다.");
-//        }
-//
-//        return new RedirectView("/schedules");
-//    }
-
 
     @PutMapping("/update/{scheduleId}")
+    @ApiOperation(value = "일일 여행일정 수정", notes = "일일 여행일정을 수정합니다.")
     public ResponseEntity<String> updateTripDailySchedule(
             @PathVariable("scheduleId") Long scheduleId,
             @RequestParam("title") String title,

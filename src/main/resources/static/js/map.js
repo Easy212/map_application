@@ -30,19 +30,23 @@ function initMap() {
     searchAutocomplete(map); // 함수 호출
 
     // DB에서 마커 불러오기
-    databaseMarker(); // 함수 호출
+    databaseMarker(() => {
+        // 마커 불러오기가 완료된 후에 실행되는 콜백 함수
+        // 리스트가 비었을 경우 텍스트 처리
+        emptyList();
+    });
 }
 
 // [함수] DB에서 마커 불러오기
 function databaseMarker() {
     const parentId = document.getElementById("parentId").value;
-    const url = `http://localhost:8080/places/data/${parentId}`;
+    const url = `/places/data/${parentId}`;
 
     // DB에서 parentId에 해당하는 places 데이터 가져오기
     fetch(url)
         .then((res) => res.json())
         .then((data) => {
-            console.log(data); // data 확인
+            //console.log(data);  //data 확인
             const places = data;
             const markerCenter = new google.maps.LatLng(data[0].lat, data[0].lng); // daily일정의 첫 장소의 lat,lng를 markerCenter에 저장
             map.setCenter(markerCenter) // 페이지 로딩시 map의 중앙을 첫 마커 중심으로 설정
@@ -53,7 +57,7 @@ function databaseMarker() {
                 addMarker(position); // 함수 호출
 
                 // 장소 정보 가져오기
-                const list = document.getElementById("place_list");
+                const list = document.getElementById("place-list");
 
                 const placeId = place.place_id;
                 const lat = place.lat;
@@ -107,19 +111,27 @@ function databaseMarker() {
                             }
                             const listItem = document.createElement("li");
                             listItem.innerHTML = `
-                    <label for='name'>이름</label><input name='name' id='name' value='${placeName}' readonly />
-                    <label for='address'>주소</label><input name='address' id='address' value='${address}' readonly /></br>
-                    <label for='phone'>전화번호</label><input name='phoneNumber' id='phone' value='${placePhoneNumber}' readonly />
-                    <label for='rating'>별점</label><input name='rating' id='rating' value='${placeRating}' readonly />
-                    <label for='placeId'></label><input type='hidden' name='placeId' id='placeId' value='${placeId}' readonly />
-                    <label for='lat'></label><input type='hidden' name='latitude' id='lat' value='${lat}' readonly />
-                    <label for='longitude'></label><input type='hidden' name='longitude' id='longitude' value='${lng}' readonly />
-                    <label for='openingHours'>영업시간</label></br>
-                    <div class='valueText'>${openingHoursHTML}</div>
-                    <label for='reviews'>리뷰</label></br>
-                    <div class='valueText'>${reviewsHTML}</div>
-                    <input type='button' value='삭제' onclick='deletePlace(this)' />
-                    `;
+                                <input name='name' id='name' class="primary-text" value='${placeName}' readonly />
+                                <label for='address'><span class="secondary-text material-symbols-rounded">home</span> 주소</label>
+                                <input name='address' id='address' value='${address}' readonly />
+                                <label for='phone'><span class="secondary-text material-symbols-rounded">call</span> 전화번호</label>
+                                <input name='phoneNumber' id='phone' value='${placePhoneNumber}' readonly />
+                                <label for='rating'><span class="secondary-text material-symbols-rounded star">star</span> 별점</label>
+                                <input name='rating' id='rating' value='${placeRating}' readonly />
+                                <label for='placeId'></label>
+                                <input type='hidden' name='placeId' id='placeId' value='${placeId}' readonly />
+                                <label for='lat'></label>
+                                <input type='hidden' name='latitude' id='lat' value='${lat}' readonly />
+                                <label for='longitude'></label>
+                                <input type='hidden' name='longitude' id='longitude' value='${lng}' readonly />
+                                <label for='openingHours'><span class="secondary-text material-symbols-rounded">schedule</span> 영업시간</label>
+                                <div class='value-text'>${openingHoursHTML}</div>
+                                <label for='reviews'><span class="secondary-text material-symbols-rounded">stylus</span> 리뷰</label>
+                                <div class='value-text'>${reviewsHTML}</div>
+                                <button class='secondary-btn' onclick='deletePlace(this)'>
+                                    <span class="material-symbols-rounded">close</span> 삭제
+                                </button>
+                                `;
 
                             list.appendChild(listItem);
 
@@ -146,24 +158,59 @@ function databaseMarker() {
 //장소 저장
 function saveData() {
     const parentId = document.getElementById("parentId").value;
-    console.log(placeItems)
+    //console.log(placeItems)
     // AJAX 요청 보내기
-    fetch('/places/' + parentId, {
+    fetch(`/places/${parentId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(placeItems)
     })
-        .then(response => response.json())
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else if (response.status === 401) {
+                throw new Error('Unauthorized');
+            } else {
+                return response.json().then(data => {
+                    throw new Error(data.redirectUrl);
+                });
+            }
+        })
         .then(data => {
-            // 요청이 성공적으로 완료된 후 처리할 코드
+            //console.log('Success:', data);
+            const redirectUrl = data.redirectUrl;
+            window.location.href = redirectUrl;
         })
         .catch(error => {
-            // 요청이 실패한 경우 처리할 코드
+           // console.log('Error:', error.message);
+            const redirectUrl = error.message; // 에러 발생 시 redirectUrl로 설정
+            window.location.href = redirectUrl;
         });
+
 }
 
+// [함수] 리스트가 비었을 경우 텍스트 처리
+function emptyList() {
+    // 장소 정보 리스트 내용이 없을 경우 텍스트 표시
+    const list = document.getElementById("place-list");
+    const text = document.getElementById("empty-text");
+
+    if (list.childElementCount === 0) {
+        if (!text) {
+            const newText = document.createElement("p");
+            newText.id = "empty-text";
+            newText.textContent = "저장된 장소가 없습니다. 장소를 추가해주세요.";
+            list.appendChild(newText);
+        }
+    } else {
+        // 리스트가 비어있지 않을 때는 text 요소를 제거한다
+        if (text) {
+            list.removeChild(text);
+        }
+    }
+}
 
 // [함수] 마커 추가
 function addMarker(position) {
@@ -178,7 +225,7 @@ function addMarker(position) {
     const geocoder = new google.maps.Geocoder();
     geocoder.geocode({location: position}, (results, status) => {
         if (status === "OK") {
-            console.log(results)
+           // console.log(results)
             // placeId 추출
             const placeId = results[0].place_id;
 
@@ -234,25 +281,34 @@ function addMarker(position) {
                 // addInfowindow() 함수 내 content에 들어가는 내용
                 const content =
                     "<form id='infowindow'>" + `
-                        <div id = 'infowindowWrap'>
-                            <label for='name'>이름</label><input name='name' id='name' value='${/^\d+$|^\d+-\d+$/.test(placeName) ? address : placeName}' readonly /></br>
-                            <label for='address'>주소</label><input name='address' id='address' value='${address}' type='hidden' readonly /></br>
-                            <div class='valueText'>${address}</div>
-                            <label for='phone'>전화번호</label><input name='phoneNumber' id='phone' value='${placePhoneNumber}' readonly /></br>
-                            <label for='rating'>별점</label><input name='rating' id='rating' value='${placeRating}' readonly />
-                            <label for='placeId'></label><input type='hidden' name='placeId' id='placeId' value='${placeId}' readonly />
-                            <label for='lat'></label><input type='hidden' name='latitude' id='lat' value='${lat}' readonly />
-                            <label for='longitude'></label><input type='hidden' name='longitude' id='longitude' value='${lng}' readonly />
-                            <label for='opening_hours'>영업시간</label></br>
-                            <div class='valueText'>${openingHoursHTML}</div>
-                            <label for='reviews'>리뷰</label></br>
-                            <div class='valueText'>${reviewsHTML}</div>
-                        </div>` +
-                    "<div id='infowindow_btn_group'>" +
-                    "<input type='button' value='장소 추가' onclick='addPlace()' />" +
-                    "<input type='button' value='마커 삭제' onclick='deleteMarker()' />" +
-                    "<input type='button' value='창 닫기' onclick='closeInfowindow()' />" +
-                    "</div>" + "</form>";
+                        <div id='infowindow-wrap'>
+                            <input name='name' id='name' class="primary-text" value='${/^\d+$|^\d+-\d+$/.test(placeName) ? address : placeName}' readonly />
+                            <label for='address'></label>
+                            <div class='value-text'>${address}</div>
+                            <input name='address' id='address' value='${address}' type='hidden' readonly />
+                            <label for='phone'><span class="secondary-text material-symbols-rounded">call</span></label>
+                            <input name='phoneNumber' id='phone' value='${placePhoneNumber}' readonly />
+                            <label for='rating'><span class="secondary-text material-symbols-rounded star">star</span></label>
+                            <input name='rating' id='rating' value='${placeRating}' readonly />
+                            <label for='placeId'></label>
+                            <input type='hidden' name='placeId' id='placeId' value='${placeId}' readonly />
+                            <label for='lat'></label>
+                            <input type='hidden' name='latitude' id='lat' value='${lat}' readonly />
+                            <label for='longitude'></label>
+                            <input type='hidden' name='longitude' id='longitude' value='${lng}' readonly />
+                        </div>
+                        <div id='infowindow-btn-group'>
+                            <button type='button' class='point-btn' onclick='addPlace()'>
+                                <span class="material-symbols-rounded">add</span> 장소 추가
+                            </button>
+                            <button type='button' class='primary-btn' onclick='deleteMarker()'>
+                                <span class="material-symbols-rounded">remove</span> 마커 삭제
+                            </button>
+                            <button type='button' class='primary-btn' onclick='closeInfowindow()'>
+                                <span class="material-symbols-rounded">close</span> 닫기
+                            </button>
+                        </div>
+                    ` + "</form>";
 
                 // 인포윈도우 추가
                 addInfowindow(marker, content); // 함수 호출
@@ -356,7 +412,7 @@ function initPlace(map) {
 
 // [함수] 전체 장소 삭제
 function deleteAllPlace() {
-    const list = document.getElementById("place_list");
+    const list = document.getElementById("place-list");
     placeItems.length = 0;
     // 장소 정보 리스트 전체 삭제
     list.innerHTML = "";
@@ -422,25 +478,33 @@ function addPlace() {
     } else {
         openingHoursHTML = opening_hours;
     }
+
     // 장소 정보 리스트 생성하기
-    const list = document.getElementById("place_list");
+    const list = document.getElementById("place-list");
     const listItem = document.createElement("li");
 
     // 장소 정보 리스트 내용
     listItem.innerHTML = `
-        <label for='name'>이름</label><input name='name' id='name' value='${/^\d+$|^\d+-\d+$/.test(placeName) ? address : placeName}' readonly /></br>
-        <label for='address'>주소</label><input name='address' id='address' value='${address}' readonly /></br>
-        <label for='phone'>전화번호</label><input name='phoneNumber' id='phone' value='${placePhoneNumber}' readonly />
-        <label for='rating'>별점</label><input name='rating' id='rating' value='${placeRating}' readonly />
-        <label for='placeId'></label><input type='hidden' name='placeId' id='placeId' value='${placeId}' readonly />
-        <label for='lat'></label><input type='hidden' name='latitude' id='lat' value='${lat}' readonly />
-        <label for='longitude'></label><input type='hidden' name='longitude' id='longitude' value='${lng}' readonly />
-        <label for='openingHours'>영업시간</label></br>
-        <div class='valueText'>${openingHoursHTML}</div>
-        <label for='reviews'>리뷰</label></br>
-        <div class='valueText'>${reviewsHTML}</div>
-        <input type='button' value='삭제' onclick='deletePlace(this)' />
-
+        <input name='name' id='name' class="primary-text" value='${/^\d+$|^\d+-\d+$/.test(placeName) ? address : placeName}' readonly />
+        <label for='address'><span class="secondary-text material-symbols-rounded">home</span> 주소</label>
+        <input name='address' id='address' value='${address}' readonly />
+        <label for='phone'><span class="secondary-text material-symbols-rounded">call</span> 전화번호</label>
+        <input name='phoneNumber' id='phone' value='${placePhoneNumber}' readonly />
+        <label for='rating'><span class="secondary-text material-symbols-rounded star">star</span> 별점</label>
+        <input name='rating' id='rating' value='${placeRating}' readonly />
+        <label for='placeId'></label>
+        <input type='hidden' name='placeId' id='placeId' value='${placeId}' readonly />
+        <label for='lat'></label>
+        <input type='hidden' name='latitude' id='lat' value='${lat}' readonly />
+        <label for='longitude'></label>
+        <input type='hidden' name='longitude' id='longitude' value='${lng}' readonly />
+        <label for='openingHours'><span class="secondary-text material-symbols-rounded">schedule</span> 영업시간</label>
+        <div class='value-text'>${openingHoursHTML}</div>
+        <label for='reviews'><span class="secondary-text material-symbols-rounded">stylus</span> 리뷰</label>
+        <div class='value-text'>${reviewsHTML}</div>
+        <button class='secondary-btn' onclick='deletePlace(this)'>
+            <span class="material-symbols-rounded">close</span> 삭제
+        </button>
     `;
 
     // 장소 정보 리스트 추가
@@ -462,6 +526,9 @@ function addPlace() {
 
     // 인포윈도우 닫기
     closeInfowindow(); // 함수 호출
+
+    // 리스트가 비었을 경우 텍스트 처리
+    emptyList();
 }
 
 // [함수] 마커 삭제
@@ -495,7 +562,7 @@ function deleteMarker() {
 
 // [함수] 장소 검색
 function searchPlace() {
-    const query = document.getElementById("map_search_input").value;
+    const query = document.getElementById("map-search-input").value;
 
     const request = {
         query: query,
@@ -522,7 +589,7 @@ function addSearchMarker(position, place) {
 // 검색창 자동완성
 function searchAutocomplete(map) {
     // 검색창
-    const input = document.getElementById("map_search_input");
+    const input = document.getElementById("map-search-input");
 
     const options = {
         fields: ["name", "geometry"],
@@ -537,7 +604,7 @@ function searchAutocomplete(map) {
     // 검색 결과가 지도의 가시 영역으로 제한 -> 사용자가 특정 지도 영역 내의 장소를 검색할 때 유용
     autocomplete.bindTo("bounds", map);
 
-    autocomplete.addListener("place_changed", () => {
+    autocomplete.addListener("place-changed", () => {
         // 선택한 장소의 세부 정보 반환
         const place = autocomplete.getPlace();
 
@@ -559,7 +626,7 @@ window.initMap = initMap;
 
 document.addEventListener("DOMContentLoaded", function() {
     // li 요소를 클릭했을 때의 이벤트 핸들러 함수
-    document.getElementById("place_list").addEventListener("click", function(event) {
+    document.getElementById("place-list").addEventListener("click", function(event) {
         // 클릭된 요소가 li인지 확인
         if (event.target.tagName === "LI" || event.target.closest("li")) {
             // 클릭된 li 요소 또는 li 요소의 자식 요소 내부의 id가 lat인 요소 찾기
@@ -570,8 +637,8 @@ document.addEventListener("DOMContentLoaded", function() {
             var latValue = latElement ? latElement.value : null;
             var lngValue = lngElement ? lngElement.value : null;
             // 원하는 동작 수행
-            console.log('lat:', latValue);
-            console.log('lng:', lngValue);
+        //    console.log('lat:', latValue);
+        //    console.log('lng:', lngValue);
             const markerCenter = new google.maps.LatLng(latValue, lngValue); // daily일정의 첫 장소의 lat,lng를 markerCenter에 저장
             map.setCenter(markerCenter) // 페이지 로딩시 map의 중앙을 첫 마커 중심으로 설정
         }

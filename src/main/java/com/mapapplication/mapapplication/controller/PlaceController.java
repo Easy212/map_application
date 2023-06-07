@@ -8,6 +8,8 @@ import com.mapapplication.mapapplication.repository.PlaceRepository;
 import com.mapapplication.mapapplication.repository.ScheduleRepository;
 import com.mapapplication.mapapplication.repository.TripDailyScheduleRepository;
 import com.mapapplication.mapapplication.service.PlaceService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Api(tags = {"4. Places"})
 @RestController
 @RequestMapping("/places")
 public class PlaceController {
@@ -36,17 +39,23 @@ public class PlaceController {
         this.scheduleRepository = scheduleRepository;
     }
 
-    @PostMapping("/{parentId}")
-    public String savePlaces(@PathVariable("parentId") Long parentId, @RequestBody List<PlaceDto> places,
-                             HttpSession session) {
+    @ApiOperation(value = "일일 여행장소 저장", notes = "일일 여행장소를 저장합니다.")
+    @PostMapping(value = "/{parentId}", consumes = "application/json")
+    public ResponseEntity<Map<String, Object>> savePlaces(@PathVariable("parentId") Long parentId, @RequestBody List<PlaceDto> places,
+                                                          HttpSession session) {
+        Long scheduleId = tripDailyScheduleRepository.findById(parentId).get().getParent().getId();
         Long userId = (Long) session.getAttribute("userId");
-        boolean isMatching = isUserIdMatching(userId, parentId);
+        boolean isMatching = isUserIdMatching(userId, scheduleId);
 
         if (isMatching) {
+            System.out.println("리다이렉트");
             placeService.savePlaces(parentId, places);
-            return "redirect:/places/lists/" + parentId;  // 저장 성공 시 리다이렉트
+            Map<String, Object> response = new HashMap<>();
+            response.put("redirectUrl", "/places/" + parentId);
+            return ResponseEntity.ok().body(response);
         } else {
-            return "error-page";
+            System.out.println("에러페이지");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 
@@ -57,11 +66,13 @@ public class PlaceController {
      * @param parentId
      * @return
      */
+    @ApiOperation(value = "일일 여행장소 목록 조회", notes = "일일 여행장소 목록을 조회합니다.")
     @GetMapping("/{parentId}")
     public ModelAndView getPlacesByParentId(@PathVariable("parentId") Long parentId,
                                             HttpSession session) {
         ModelAndView modelAndView= new ModelAndView();
         Long scheduleId = tripDailyScheduleRepository.findById(parentId).get().getParent().getId();
+        System.out.println(scheduleId);
         Long userId = (Long) session.getAttribute("userId");
         boolean isMatching = isUserIdMatching(userId, scheduleId);
 
@@ -75,18 +86,18 @@ public class PlaceController {
             modelAndView.addObject("daily", parent);
             modelAndView.setViewName("map");
         }else {
-            modelAndView.setViewName("error");
+            modelAndView.setViewName("login");
         }
         return modelAndView;
     }
 
     /**
-     * 추가된 컨트롤러
      * 리스트 조회 (JSON 데이터)
      *
      * @param parentId
      * @return
      */
+    @ApiOperation(value = "일일 여행장소 목록 JSON 데이터 조회", notes = "일일 여행장소 목록의 JSON 데이터를 조회합니다.")
     @GetMapping("/data/{parentId}")
     public ResponseEntity<List<Map<String, Object>>> getPlacesByParentIdData(@PathVariable("parentId") Long parentId) {
         try {
@@ -114,6 +125,7 @@ public class PlaceController {
     }
 
     //장소 하나 지우기
+    @ApiOperation(value = "일일 여행장소 선택 삭제", notes = "일일 여행장소를 선택 삭제합니다.")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deletePlace(@PathVariable("id") Long id,
                                               HttpSession session) {
@@ -132,6 +144,7 @@ public class PlaceController {
     }
 
     // 부모id를 받아서 연관된 전체 장소 지워서 초기화
+    @ApiOperation(value = "일일 여행장소 전체 삭제", notes = "일일 여행장소를 전체 삭제합니다.")
     @DeleteMapping("/reset/{parentId}")
     public ResponseEntity<String> deletePlacesByParentId(@PathVariable("parentId") Long parentId,
                                                          HttpSession session) {

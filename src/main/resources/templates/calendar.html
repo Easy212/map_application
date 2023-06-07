@@ -1,31 +1,132 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>TRIPLANER 전체 여행일정</title>
+
+    <!-- favicon -->
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+
+    <!-- css -->
+    <!-- fullcalendar -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.7.0/main.min.css" />
+    <!-- bootstrap 4 css -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reset-css@5.0.0/reset.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="/css/common.css" />
+    <link rel="stylesheet" href="/css/calendar.css" />
+
+    <!-- js -->
     <script src="/js/calendar.js"></script>
-    <link rel="stylesheet" href="/css/calendar.css">
-    <!-- fullcalendar 라이브러리 -->
+    <!-- fullcalendar -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.js'></script>
-    <!-- jQuery 라이브러리 -->
+    <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-    <!-- bootstrap 4 -->
-    <!-- 부트스트랩 4 스타일시트 -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <!-- 부트스트랩 4 자바스크립트 파일 -->
+    <!-- bootstrap 4 js -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-
-    <!-- fullcalendar -->
-    <!-- fullcalendar 라이브러리 스타일시트 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.7.0/main.min.css">
-    <!-- fullcalendar 라이브러리 자바스크립트 파일 -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/fullcalendar@5.7.0/main.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+</head>
+<body>
+    <!-- header -->
+    <header id="header">
+        <nav id="header-menu-left">
+            <h1 class="logo">TRI<span class="logo-italic-small point-text">P</span>LANER</h1>
+        </nav>
+        <div id="header-menu-right">
+            <span th:text="${session.loginEmail}"></span>
+            <a href="/member/logout">로그아웃</a>
+        </div>
+    </header>
+
+    <!-- calendar -->
+    <div id="calendarBox">
+        <div id="calendar"></div>
+    </div>
+
+    <!-- modal 창(일정추가) -->
+    <div class="modal fade" id="calendarModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title exampleModalLabel">일정을 추가하세요.</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="addCalendarForm" action="/schedules" method="post">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="calendar-content" class="col-form-label">일정 내용</label>
+                            <input type="text" class="form-control" id="calendar-content" name="title">
+                            <label for="calendar-start-date" class="col-form-label">시작 날짜</label>
+                            <input type="date" class="form-control" id="calendar-start-date" name="startDate">
+                            <label for="calendar-end-date" class="col-form-label">종료 날짜</label>
+                            <input type="date" class="form-control" id="calendar-end-date" name="endDate">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn primary-btn" id="addCalendar">저장</button>
+                        <button type="button" class="btn disable-btn" data-dismiss="modal" id="sprintSettingModalClose">
+                            취소
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal 창(일정수정) -->
+    <div class="modal modal-delete fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title exampleModalLabel">일정을 삭제하시겠습니까?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-bodys"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- footer -->
+    <footer id="footer">
+        <h1 class="logo">TRI<span class="logo-italic-small">P</span>LANER</h1>
+        <p>© 2023 TRIPLANER. All rights reserved.</p>
+        <a th:if="${session.userId != null}" onclick="confirmDelete()">회원탈퇴</a>
+    </footer>
+
+    <!-- js -->
     <script th:inline="javascript">
+        function confirmDelete() {
+            if (confirm("정말로 탈퇴하시겠습니까?")) {
+                const xhr = new XMLHttpRequest();
+                const url = '/member/delete/' + [[${session.userId}]];
+                xhr.open('DELETE', url);
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            // 회원탈퇴 성공 시 처리할 로직
+                            window.location.href = '/login'; // 탈퇴 후 로그인 페이지로 리다이렉트
+                        } else {
+                            // 회원탈퇴 실패 시 처리할 로직
+                            alert('회원탈퇴에 실패하였습니다.');
+                        }
+                    }
+                };
+                xhr.send();
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             const t = 'T00:00:01'
             /*<![CDATA[*/
@@ -43,12 +144,15 @@
             const calendarEl = document.getElementById('calendar');
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 timeZone: 'UTC',
-                initialView: 'dayGridMonth', // 홈페이지에서 다른 형태의 view를 확인할  수 있다.
+                initialView: 'dayGridMonth', // 홈페이지에서 다른 형태의 view를 확인할 수 있다.
                 editable: false, // false로 변경 시 draggable 작동 x
                 locale: 'ko', //한국어
                 selectable: true, //드래그해서 선택가능
                 displayEventTime: false, // 시간 표시 x
                 events: convertedData,
+                buttonText:{ // 버튼 텍스트 변환
+                    today : '오늘'
+                },
                 headerToolbar: {
                     center: 'addEventButton' // headerToolbar에 버튼을 추가
                 },
@@ -88,7 +192,7 @@
                                 const event = calendar.getEventById(info.event.id); // 이벤트 가져오기 (getEventById = 해당 id를 가진 일정을 검색하여 반환)
                                 deleteEvent(event.id);
                             }, 500); // 0.5초 클릭 시간 설정
-                        }ㅏㅓㅓ
+                        }
                     });
                     //마우스 버튼을 놓으면 롱 클릭 동작이 취소
                     info.el.addEventListener('mouseup', function (e) { // 마우스 업 이벤트(mouseup) 등록
@@ -118,8 +222,8 @@
 
                         const formContent = `
                             <div class="modal-footer">
-                                <button type="submit" class="btn btn-warning" id="deleteComplete">예</button>
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="sprintSettingModalClose">아니오</button>
+                                <button type="submit" class="btn primary-btn" id="deleteComplete">예</button>
+                                <button type="button" class="btn disable-btn" data-dismiss="modal" id="sprintSettingModalClose">아니오</button>
                             </div>
                         `;
 
@@ -154,8 +258,6 @@
                             });
                         });
                     }
-
-
                 },
             });
 
@@ -163,9 +265,9 @@
             $("#addCalendar").on("click", function (e) {
                 e.preventDefault(); //submit 동작 방지
 
-                const content = $("#calendar_content").val(); //#calendar_content의 value값
-                const startDate = $("#calendar_start_date").val(); //#calendar_start_date의 value값
-                const endDate = $("#calendar_end_date").val(); //#calendarr_end_date의 value값
+                const content = $("#calendar-content").val(); //#calendar-content의 value값
+                const startDate = $("#calendar-start-date").val(); //#calendar-start-date의 value값
+                const endDate = $("#calendar-end-date").val(); //#calendarr-end-date의 value값
 
                 //내용 입력 여부 확인
                 if (content == null || content == "") {
@@ -184,9 +286,9 @@
 
             // 일정추가 modal창의 취소 버튼 클릭 시
             $("#calendarModal").on("hidden.bs.modal", function () {
-                $("#calendar_content").val(""); // 일정 내용 필드 초기화
-                $("#calendar_start_date").val(""); // 시작 날짜 필드 초기화
-                $("#calendar_end_date").val(""); // 종료 날짜 필드 초기화
+                $("#calendar-content").val(""); // 일정 내용 필드 초기화
+                $("#calendar-start-date").val(""); // 시작 날짜 필드 초기화
+                $("#calendar-end-date").val(""); // 종료 날짜 필드 초기화
             });
 
             let scheduleColors = {}; // 스케줄 ID와 색상을 저장하기 위한 객체
@@ -197,7 +299,7 @@
                     return scheduleColors[scheduleId]; // 이미 할당된 색상이 있는 경우 해당 색상 반환
                 }
 
-                const colors = ["#00D8FF", "#1DDB16", "#FF007F", "#FFA7A7", "#5F00FF", "#990085", "#F2CB61", "#D941C5", "#BCE55C", "#993800"];
+                const colors = ["#1e90ff", "#191970", "#20b2aa", "#7b68ee", "#cd5c5c", "#db7093", "#778899", "#4682b4", "#8fbc8f", "#ffa07a"];
                 const color = colors[colorIndex]; // 변수: 다음에 할당될 색상을 지정하기 위한 인덱스
                 scheduleColors[scheduleId] = color; // 새로운 스케줄에 색상 할당
                 colorIndex = (colorIndex + 1) % colors.length;
@@ -210,66 +312,5 @@
             calendar.render();
         });
     </script>
-    <title>일정</title>
-</head>
-
-<body>
-<div id="calendarBox">
-    <div id="calendar"></div>
-</div>
-
-<!-- modal 창(일정추가) -->
-<div class="modal fade" id="calendarModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">일정을 입력하세요.</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form id="addCalendarForm" action="/schedules" method="post">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="calendar_content" class="col-form-label">일정 내용</label>
-                        <input type="text" class="form-control" id="calendar_content" name="title">
-                        <label for="calendar_start_date" class="col-form-label">시작 날짜</label>
-                        <input type="date" class="form-control" id="calendar_start_date" name="startDate">
-                        <label for="calendar_end_date" class="col-form-label">종료 날짜</label>
-                        <input type="date" class="form-control" id="calendar_end_date" name="endDate">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-warning" id="addCalendar">저장</button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="sprintSettingModalClose">
-                        취소
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- modal 창(일정수정) -->
-<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">일정을 삭제하시겠습니까?</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-bodys">
-
-            </div>
-        </div>
-    </div>
-</div>
-
-
 </body>
-
 </html>
